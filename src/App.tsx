@@ -1,35 +1,33 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { observer, useLocalObservable } from "mobx-react-lite";
+import { GiverStore, GiverStoreContext, ReceiverStore } from "./stores";
+import { useRequiredContext } from "./useRequiredContext";
 
-function App() {
-  const [count, setCount] = useState(0)
+const App = observer(function App() {
+  const giverStore = useLocalObservable(() => new GiverStore());
 
   return (
-    <>
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
-}
+    <div>
+      <p>in GiverStore: {giverStore.count.get()}</p>
+      <GiverStoreContext.Provider value={giverStore}>
+        <Receiver />
+      </GiverStoreContext.Provider>
+    </div>
+  );
+});
 
-export default App
+const Receiver = observer(function Receiver() {
+  const giverStore = useRequiredContext(GiverStoreContext);
+  const receiverStore = useLocalObservable(
+    () => new ReceiverStore(giverStore.count)
+  );
+
+  return (
+    <div>
+      <p>in ReceiverStore: {receiverStore.count.get()}</p>
+      <button onClick={() => receiverStore.increment()}>+</button>
+      <button onClick={() => receiverStore.decrement()}>-</button>
+    </div>
+  );
+});
+
+export default App;
